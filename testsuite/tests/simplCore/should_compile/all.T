@@ -581,3 +581,4 @@ test('T26722', [grep_errmsg(r'SPEC')], compile, ['-O -dno-typeable-binds'])
 
 test('T26805', [grep_errmsg(r'fromInteger')], compile, ['-O -dno-typeable-binds -ddump-simpl -dsuppress-uniques'])
 test('T26826', normal, compile, ['-O'])
+test('T26548', normal, compile, ['-O -ddump-simpl -dsuppress-uniques -dno-typeable-binds'])
