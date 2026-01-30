@@ -78,7 +78,7 @@ import GHC.Internal.Word
 import GHC.Internal.Exts
 import GHC.Internal.Generics
 import GHC.Internal.Numeric
-import GHC.Internal.Stack (HasCallStack)
+import GHC.Internal.Stack.Types (HasCallStack)
 
 ------------------------------------------------------------------------
 -- Boxes
