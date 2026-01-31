@@ -746,7 +746,7 @@ module Data.Bits where
   toIntegralSized :: forall a b. (GHC.Internal.Real.Integral a, GHC.Internal.Real.Integral b, Bits a, Bits b) => a -> GHC.Internal.Maybe.Maybe b
 
 module Data.Bool where
-  -- Safety: Safe
+  -- Safety: Trustworthy
   (&&) :: Bool -> Bool -> Bool
   type Bool :: *
   data Bool = False | True
@@ -1308,7 +1308,7 @@ module Data.Kind where
   type Type = TYPE GHC.Internal.Types.LiftedRep
 
 module Data.List where
-  -- Safety: Safe
+  -- Safety: Trustworthy
   (!!) :: forall a. GHC.Internal.Stack.Types.HasCallStack => [a] -> GHC.Internal.Types.Int -> a
   (!?) :: forall a. [a] -> GHC.Internal.Types.Int -> GHC.Internal.Maybe.Maybe a
   (++) :: forall a. [a] -> [a] -> [a]

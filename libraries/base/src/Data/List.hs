@@ -1,4 +1,4 @@
-{-# LANGUAGE Safe #-}
+{-# LANGUAGE Trustworthy #-}
 
 -- |
 --
@@ -184,7 +184,7 @@ module Data.List
      genericReplicate
      ) where
 
-import GHC.Internal.Data.Bool (otherwise)
+import GHC.Internal.Base (otherwise)
 import GHC.Internal.Data.Function (const)
 import GHC.Internal.Data.List
 import GHC.Internal.Data.List.NonEmpty (NonEmpty(..))
