@@ -418,7 +418,6 @@ isDbOpenReadMode = \case
 --
 readPackageDbForGhc :: FilePath -> IO [DbUnitInfo]
 readPackageDbForGhc file = do
-   hPutStrLn stderr $ "readPackageDbForGhc:" ++ show file
    withLockedPackageDb DbOpenReadOnly file $ \_ -> do
       decodeFromFile file DbOpenReadOnly getDbForGhc >>= \case
          (pkgs, DbOpenReadOnly) -> return pkgs
