@@ -185,6 +185,7 @@ import GHC.Hs hiding (LIE)
 import GHC.Unit
 import GHC.Unit.Env
 import GHC.Unit.External
+import GHC.Unit.Module.Deps
 import GHC.Unit.Module.Warnings
 import GHC.Unit.Home.PackageTable
 
@@ -310,7 +311,7 @@ initTcGblEnv hsc_env hsc_src keep_rn_syntax mod loc =
      ; th_state_var         <- newIORef Map.empty
      ; th_remote_state_var  <- newIORef Nothing
      ; th_docs_var          <- newIORef Map.empty
-     ; th_needed_deps_var   <- newIORef ([], emptyUDFM)
+     ; th_needed_deps_var   <- newIORef (noLinkableUsage, emptyUDFM)
      ; next_wrapper_num     <- newIORef emptyModuleEnv
      ; let
         -- bangs to avoid leaking the env (#19356)
@@ -2270,7 +2271,7 @@ recordThNeededRuntimeDeps :: [Linkable] -> PkgsLoaded -> TcM ()
 recordThNeededRuntimeDeps new_links new_pkgs
   = do { env <- getGblEnv
        ; updTcRef (tcg_th_needed_deps env) $ \(needed_links, needed_pkgs) ->
-           let links = new_links ++ needed_links
+           let links = mkLinkableUsage new_links `combineLinkableUsage` needed_links
                !pkgs = plusUDFM needed_pkgs new_pkgs
                in (links, pkgs)
        }

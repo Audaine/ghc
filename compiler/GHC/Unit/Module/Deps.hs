@@ -22,6 +22,10 @@ module GHC.Unit.Module.Deps
    , ImportAvails (..)
    , IfaceImportLevel(..)
    , tcImportLevel
+   , LinkableUsage(..)
+   , noLinkableUsage
+   , combineLinkableUsage
+   , mkLinkableUsage
    )
 where
 
@@ -49,6 +53,7 @@ import qualified Data.Set as Set
 import Data.Bifunctor
 import Control.DeepSeq
 import GHC.Types.Name.Set
+import GHC.Linker.Types (Linkable, LinkablePart (..))
 
 
 
@@ -695,3 +700,20 @@ data ImportAvails
           -- ^ Family instance modules below us in the import tree (and maybe
           -- including us for imported modules)
       }
+
+data LinkableUsage = LinkableUsage
+
+noLinkableUsage :: LinkableUsage
+noLinkableUsage = LinkableUsage
+
+combineLinkableUsage :: LinkableUsage -> LinkableUsage -> LinkableUsage
+combineLinkableUsage _ _ = LinkableUsage
+
+mkLinkableUsage :: [Linkable] -> LinkableUsage
+mkLinkableUsage = pure undefined
+  where
+    go = \ case
+      DotO{} -> undefined
+      DotA{} -> undefined
+      DotDLL{} -> undefined
+      DotGBC{} -> undefined

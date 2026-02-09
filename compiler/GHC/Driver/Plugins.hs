@@ -77,6 +77,7 @@ import GHC.Driver.Phases
 import GHC.Driver.Plugins.External
 
 import GHC.Unit.Module
+import GHC.Unit.Module.Deps
 import GHC.Unit.Module.ModIface
 import GHC.Unit.Module.ModSummary
 
@@ -342,7 +343,7 @@ data Plugins = Plugins
       -- The purpose of this field is to cache the plugins so they
       -- don't have to be loaded each time they are needed.  See
       -- 'GHC.Runtime.Loader.initializePlugins'.
-  , loadedPluginDeps :: !([Linkable], PkgsLoaded)
+  , loadedPluginDeps :: !(LinkableUsage, PkgsLoaded)
   -- ^ The object files required by the loaded plugins
   -- See Note [Plugin dependencies]
   }
@@ -352,7 +353,7 @@ emptyPlugins = Plugins
   { staticPlugins    = []
   , externalPlugins  = []
   , loadedPlugins    = []
-  , loadedPluginDeps = ([], emptyUDFM)
+  , loadedPluginDeps = (noLinkableUsage, emptyUDFM)
   }
 
 pluginsWithArgs :: Plugins -> [PluginWithArgs]

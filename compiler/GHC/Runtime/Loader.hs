@@ -58,6 +58,7 @@ import GHC.Types.Unique.DFM
 import GHC.Unit.Finder         ( findPluginModule, FindResult(..) )
 import GHC.Driver.Config.Diagnostic ( initIfaceMessageOpts )
 import GHC.Unit.Module   ( Module, ModuleName, thisGhcUnit, GenModule(moduleUnit), IsBootInterface(NotBoot) )
+import GHC.Unit.Module.Deps ( mkLinkableUsage )
 import GHC.Unit.Module.ModIface
 import GHC.Unit.Env
 
@@ -131,7 +132,7 @@ initializePlugins hsc_env
        let plugins' = (hsc_plugins hsc_env) { staticPlugins    = map (\sp -> sp{ spInitialised = True }) $ staticPlugins (hsc_plugins hsc_env)
                                             , externalPlugins  = external_plugins
                                             , loadedPlugins    = loaded_plugins
-                                            , loadedPluginDeps = (links, pkgs)
+                                            , loadedPluginDeps = (mkLinkableUsage links, pkgs)
                                             }
        let hsc_env' = hsc_env { hsc_plugins = plugins' }
        withPlugins (hsc_plugins hsc_env') driverPlugin hsc_env'

@@ -7,8 +7,6 @@ module GHC.HsToCore.Usage (
 
 import GHC.Prelude
 
-import GHC.Driver.Env
-
 import GHC.Tc.Types
 
 import GHC.Iface.Load
@@ -27,7 +25,6 @@ import GHC.Types.Unique.Set
 
 import GHC.Unit
 import GHC.Unit.Env
-import GHC.Unit.External
 import GHC.Unit.Module.Imported
 import GHC.Unit.Module.ModIface
 import GHC.Unit.Module.Deps
@@ -35,12 +32,10 @@ import GHC.Unit.Module.Deps
 import GHC.Data.Maybe
 import GHC.Data.FastString
 
-import Data.IORef
 import Data.List (sortBy)
 import Data.Map (Map)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
-import qualified Data.List.NonEmpty as NE
 
 import GHC.Linker.Types
 import GHC.Unit.Finder
@@ -75,19 +70,17 @@ data UsageConfig = UsageConfig
 
 mkUsageInfo :: UsageConfig -> Plugins -> FinderCache -> UnitEnv
             -> Module -> ImportedMods -> [ImportUserSpec] -> NameSet
-            -> [FilePath] -> [FilePath] -> [(Module, Fingerprint)] -> [Linkable] -> PkgsLoaded
+            -> [FilePath] -> [FilePath] -> [(Module, Fingerprint)] -> LinkableUsage -> PkgsLoaded
             -> IfG [Usage]
 mkUsageInfo uc plugins fc unit_env
   this_mod dir_imp_mods imp_decls used_names
   dependent_files dependent_dirs merged needed_links needed_pkgs
   = do
-    eps <- liftIO $ readIORef (euc_eps (ue_eps unit_env))
     file_hashes <- liftIO $ mapM getFileHash dependent_files
     dirs_hashes <- liftIO $ mapM getDirHash dependent_dirs
     let hu = ue_unsafeHomeUnit unit_env
-        hug = ue_home_unit_graph unit_env
     -- Dependencies on object files due to TH and plugins
-    object_usages <- liftIO $ mkObjectUsage (eps_PIT eps) plugins fc hug needed_links needed_pkgs
+    object_usages <- liftIO $ mkObjectUsage plugins fc needed_links needed_pkgs
     let all_home_ids = HUG.allUnits (ue_home_unit_graph unit_env)
     mod_usages <- mk_mod_usage_info uc hu all_home_ids this_mod
                                        dir_imp_mods imp_decls used_names
@@ -190,30 +183,30 @@ for a module or not. This is similar to how the recompilation checking for the l
 
 -- | Find object files corresponding to the transitive closure of given home
 -- modules and direct object files for pkg dependencies
-mkObjectUsage :: PackageIfaceTable -> Plugins -> FinderCache -> HomeUnitGraph-> [Linkable] -> PkgsLoaded -> IO [Usage]
-mkObjectUsage pit plugins fc hug th_links_needed th_pkgs_needed = do
-      let ls = ordNubOn linkableModule (th_links_needed ++ plugins_links_needed)
+mkObjectUsage :: Plugins -> FinderCache -> LinkableUsage -> PkgsLoaded -> IO [Usage]
+mkObjectUsage plugins fc th_links_needed th_pkgs_needed = do
+      let ls = th_links_needed `combineLinkableUsage` plugins_links_needed
           ds = concatMap loaded_pkg_hs_objs $ eltsUDFM (plusUDFM th_pkgs_needed plugin_pkgs_needed) -- TODO possibly record loaded_pkg_non_hs_objs as well
           (plugins_links_needed, plugin_pkgs_needed) = loadedPluginDeps plugins
-      concat <$> sequence (map linkableToUsage ls ++ map librarySpecToUsage ds)
+      concat <$> sequence (linkableToUsage ls ++ map librarySpecToUsage ds)
   where
-    linkableToUsage (Linkable _ m uls) = mapM (partToUsage m) (NE.toList uls)
+    linkableToUsage _ = []
 
-    msg m = moduleNameString (moduleName m) ++ "[TH] changed"
+    -- msg m = moduleNameString (moduleName m) ++ "[TH] changed"
 
     fing mmsg fn = UsageFile (mkFastString fn) <$> lookupFileCache fc fn <*> pure mmsg
 
-    partToUsage m part =
-      case linkablePartPath part of
-        Just fn -> fing (Just (msg m)) fn
-        Nothing ->  do
-          -- This should only happen for home package things but oneshot puts
-          -- home package ifaces in the PIT.
-          miface <- lookupIfaceByModule hug pit m
-          case miface of
-            Nothing -> pprPanic "linkableToUsage" (ppr m)
-            Just iface ->
-              return $ UsageHomeModuleInterface (moduleName m) (toUnitId $ moduleUnit m) (mi_iface_hash iface)
+    -- partToUsage m part =
+    --   case linkablePartPath part of
+    --     Just fn -> fing (Just (msg m)) fn
+    --     Nothing ->  do
+    --       -- This should only happen for home package things but oneshot puts
+    --       -- home package ifaces in the PIT.
+    --       miface <- lookupIfaceByModule hug pit m
+    --       case miface of
+    --         Nothing -> pprPanic "linkableToUsage" (ppr m)
+    --         Just iface ->
+    --           return $ UsageHomeModuleInterface (moduleName m) (toUnitId $ moduleUnit m) (mi_iface_hash iface)
 
     librarySpecToUsage :: LibrarySpec -> IO [Usage]
     librarySpecToUsage (Objects os) = traverse (fing Nothing) os

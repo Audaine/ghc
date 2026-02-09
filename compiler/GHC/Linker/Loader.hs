@@ -974,7 +974,7 @@ rmDupLinkables already ls
 dynLinkBCOs :: Interp -> LoaderState -> KeepModuleLinkableDefinitions -> [Linkable] -> IO LoaderState
 dynLinkBCOs interp pls keep_spec bcos =
 
-        let (bcos_loaded', new_bcos) = rmDupLinkables (bcos_loaded pls) bcos
+        let (bcos_loaded', new_bcos) = rmDupLinkables (bcos_loaded pls) bcos -- TODO: @fendor, convert to linkable usage here?
             pls1                     = pls { bcos_loaded = bcos_loaded' }
 
             cbcs :: [CompiledByteCode]
@@ -1109,7 +1109,7 @@ unload_wkr interp pls@LoaderState{..}  = do
   -- we're unloading some code.  -fghci-leak-check with the tests in
   -- testsuite/ghci can detect space leaks here.
 
-  let linkables_to_unload = moduleEnvElts objs_loaded ++ moduleEnvElts bcos_loaded
+  let linkables_to_unload = moduleEnvElts objs_loaded ++ moduleEnvElts bcos_loaded -- TODO: @fendor LinkableUsage here already?
 
   mapM_ unloadObjs linkables_to_unload
 
